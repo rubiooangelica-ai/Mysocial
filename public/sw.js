@@ -1,6 +1,8 @@
 // Service worker: deixa o app abrir e funcionar offline (os dados já ficam
 // no IndexedDB do dispositivo; aqui cacheamos o "casco" do app).
 const CACHE = 'mysocial-v1'
+// raiz do app (funciona tanto em domínio próprio quanto em subcaminho /Mysocial/)
+const ROOT = self.registration.scope
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -22,10 +24,10 @@ self.addEventListener('fetch', event => {
       fetch(request)
         .then(res => {
           const copy = res.clone()
-          caches.open(CACHE).then(c => c.put('/', copy))
+          caches.open(CACHE).then(c => c.put(ROOT, copy))
           return res
         })
-        .catch(() => caches.match('/')),
+        .catch(() => caches.match(ROOT)),
     )
     return
   }
