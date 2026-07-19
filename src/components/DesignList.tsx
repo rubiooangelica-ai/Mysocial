@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { useNav } from '../nav'
 import { CATEGORIES, FORMATS, type Design, type Project } from '../types'
 import { blankDesign, instantiateTemplate } from '../designOps'
+import { I } from '../icons'
 
 function timeAgo(ts: number) {
   const m = Math.floor((Date.now() - ts) / 60000)
@@ -49,9 +50,9 @@ export default function DesignList({ project }: { project: Project }) {
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-editor)' }}>🎨 Editor</h2>
+        <h2 style={{ color: 'var(--m-editor)' }}><I n="palette" size={24} /> Editor</h2>
         <div className="spacer" />
-        <button className="btn editor" onClick={() => setCreating(true)}>＋ Novo design</button>
+        <button className="btn editor" onClick={() => setCreating(true)}><I n="plus" size={18} /> Novo design</button>
       </div>
 
       <div className="chip-row">
@@ -67,7 +68,7 @@ export default function DesignList({ project }: { project: Project }) {
 
       {designs.length === 0 ? (
         <div className="empty">
-          <div className="big">🖼️</div>
+          <div className="big"><I n="image" size={34} /></div>
           <b>Nenhum design {cat !== 'todos' ? `em "${cat}"` : 'ainda'}</b>
           <p>Crie um design a partir de um formato pronto ou de um template salvo.</p>
         </div>
@@ -81,7 +82,7 @@ export default function DesignList({ project }: { project: Project }) {
                 onClick={() => go({ screen: 'design', projectId: project.id, designId: d.id })}
               >
                 <div className="thumb">
-                  {d.thumb ? <img src={d.thumb} alt="" /> : <span style={{ fontSize: 30 }}>🎨</span>}
+                  {d.thumb ? <img src={d.thumb} alt="" /> : <I n="image" size={30} />}
                   <span className="fmt">{FORMATS.find(f => f.id === d.formatId)?.label ?? `${d.w}×${d.h}`}</span>
                 </div>
                 <div className="info">
@@ -90,11 +91,10 @@ export default function DesignList({ project }: { project: Project }) {
                 </div>
               </button>
               <button
-                className="icon-btn"
-                style={{ position: 'absolute', top: 6, left: 6, width: 34, height: 34, background: 'rgba(255,255,255,0.9)', fontSize: 14 }}
+                className="card-float-del"
                 onClick={() => confirm(`Excluir "${d.name}"?`) && removeDesign(d.id)}
               >
-                🗑️
+                <I n="trash" size={16} />
               </button>
             </div>
           ))}
@@ -104,14 +104,14 @@ export default function DesignList({ project }: { project: Project }) {
       {templates.length > 0 && (
         <>
           <div className="section-head" style={{ marginTop: 8 }}>
-            <h2 style={{ fontSize: 17 }}>📐 Meus templates</h2>
+            <h2 style={{ fontSize: 18 }}><I n="grid" size={19} /> Meus templates</h2>
           </div>
           <div className="design-grid">
             {templates.map(t => (
               <div key={t.id} style={{ position: 'relative' }}>
                 <button className="design-card" style={{ width: '100%' }} onClick={() => createFromTemplate(t)}>
                   <div className="thumb">
-                    {t.thumb ? <img src={t.thumb} alt="" /> : <span style={{ fontSize: 30 }}>📐</span>}
+                    {t.thumb ? <img src={t.thumb} alt="" /> : <I n="grid" size={30} />}
                     <span className="fmt">{FORMATS.find(f => f.id === t.formatId)?.label}</span>
                   </div>
                   <div className="info">
@@ -120,11 +120,10 @@ export default function DesignList({ project }: { project: Project }) {
                   </div>
                 </button>
                 <button
-                  className="icon-btn"
-                  style={{ position: 'absolute', top: 6, left: 6, width: 34, height: 34, background: 'rgba(255,255,255,0.9)', fontSize: 14 }}
+                  className="card-float-del"
                   onClick={() => confirm(`Excluir template "${t.name}"?`) && removeDesign(t.id)}
                 >
-                  🗑️
+                  <I n="trash" size={16} />
                 </button>
               </div>
             ))}
@@ -168,7 +167,7 @@ export default function DesignList({ project }: { project: Project }) {
                   {templates.map(t => (
                     <button key={t.id} className="design-card" onClick={() => createFromTemplate(t)}>
                       <div className="thumb">
-                        {t.thumb ? <img src={t.thumb} alt="" /> : '📐'}
+                        {t.thumb ? <img src={t.thumb} alt="" /> : <I n="grid" size={24} />}
                       </div>
                       <div className="info"><b>{t.name}</b></div>
                     </button>

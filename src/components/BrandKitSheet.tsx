@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { fileToDataUrl, getAssetUrlSync, useStore } from '../store'
 import { FONTS, type Project } from '../types'
+import { I } from '../icons'
 
 export default function BrandKitSheet({ project, onClose }: { project: Project; onClose: () => void }) {
   const updateBrand = useStore(s => s.updateBrand)
@@ -32,7 +33,7 @@ export default function BrandKitSheet({ project, onClose }: { project: Project; 
   return (
     <div className="overlay" onClick={onClose}>
       <div className="sheet wide" onClick={e => e.stopPropagation()}>
-        <h3>🎨 Kit de Marca · {project.name}</h3>
+        <h3><I n="palette" /> Kit de Marca · {project.name}</h3>
         <p className="muted">
           Cores, fontes e logo deste cliente ficam disponíveis automaticamente no Editor.
         </p>
@@ -56,7 +57,7 @@ export default function BrandKitSheet({ project, onClose }: { project: Project; 
               className="btn small ghost"
               onClick={() => updateBrand(project.id, { colors: [...brand.colors, newColor] })}
             >
-              ＋ Adicionar
+              <I n="plus" size={15} /> Adicionar
             </button>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Toque em uma cor para removê-la.</p>
@@ -102,7 +103,7 @@ export default function BrandKitSheet({ project, onClose }: { project: Project; 
               <img src={logoUrl} alt="logo" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 12, background: 'var(--surface-2)' }} />
             )}
             <button className="btn ghost" onClick={() => logoInput.current?.click()}>
-              {logoUrl ? 'Trocar logo' : '⬆️ Enviar logo'}
+              <I n="image" size={17} /> {logoUrl ? 'Trocar logo' : 'Enviar logo'}
             </button>
             {logoUrl && (
               <button
@@ -144,8 +145,8 @@ export default function BrandKitSheet({ project, onClose }: { project: Project; 
                 </div>
               )
             })}
-            <button className="item" onClick={() => elInput.current?.click()} style={{ fontSize: 24 }}>
-              ＋
+            <button className="item" onClick={() => elInput.current?.click()}>
+              <I n="plus" size={22} />
             </button>
             <input
               ref={elInput}

@@ -5,6 +5,7 @@ import { callClaude, dataUrlToImageBlock, extractJson, getApiKey, setApiKey, typ
 import { draftFromBrand } from '../designOps'
 import { makeThumb } from '../render'
 import { FONTS, type Project } from '../types'
+import { I } from '../icons'
 
 interface IdentityProposal {
   colors: string[]
@@ -224,13 +225,13 @@ export default function Ai({ project }: { project: Project }) {
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-ai)' }}>✨ Assistente de IA</h2>
+        <h2 style={{ color: 'var(--m-ai)' }}><I n="sparkle" size={24} /> Assistente de IA</h2>
       </div>
 
       {/* ─── configuração da chave ─── */}
       {keyEditing ? (
         <div className="ai-card">
-          <h3>🔑 Conectar a IA</h3>
+          <h3><I n="key" /> Conectar a IA</h3>
           <p className="muted">
             O assistente usa a API da Anthropic (Claude) com visão multimodal e busca na web.
             Cole sua chave de API — ela fica salva apenas neste dispositivo.
@@ -261,8 +262,8 @@ export default function Ai({ project }: { project: Project }) {
           </div>
         </div>
       ) : (
-        <p className="muted">
-          🔑 IA conectada ·{' '}
+        <p className="muted" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <I n="key" size={15} /> IA conectada ·{' '}
           <button style={{ textDecoration: 'underline' }} onClick={() => setKeyEditing(true)}>
             trocar chave
           </button>
@@ -278,7 +279,7 @@ export default function Ai({ project }: { project: Project }) {
 
       {/* ─── 6.1 identidade visual guiada ─── */}
       <div className="ai-card">
-        <h3>🎨 Identidade visual guiada</h3>
+        <h3><I n="palette" /> Identidade visual guiada</h3>
         <p className="muted">
           Anexe inspirações (fotos, prints, links). A IA faz perguntas para entender a intenção
           por trás delas e só então propõe paleta, fontes e tom de voz — tudo editável antes de
@@ -297,7 +298,7 @@ export default function Ai({ project }: { project: Project }) {
                 </div>
               )
             })}
-            <button className="item" style={{ fontSize: 24 }} onClick={() => inspInput.current?.click()}>＋</button>
+            <button className="item" onClick={() => inspInput.current?.click()}><I n="plus" size={22} /></button>
             <input
               ref={inspInput} type="file" accept="image/*" multiple hidden
               onChange={e => e.target.files && uploadInspiration(e.target.files)}
@@ -318,7 +319,7 @@ export default function Ai({ project }: { project: Project }) {
                 setNewLink('')
               }}
             >
-              ＋ Link
+              <I n="link" size={15} /> Link
             </button>
           </div>
           {links.length > 0 && (
@@ -328,7 +329,7 @@ export default function Ai({ project }: { project: Project }) {
                   key={i} className="chip" title="Toque para remover"
                   onClick={() => updateProject(project.id, { inspirationLinks: links.filter((_, j) => j !== i) })}
                 >
-                  🔗 {l.replace(/https?:\/\//, '').slice(0, 28)} ✕
+                  <I n="link" size={13} /> {l.replace(/https?:\/\//, '').slice(0, 28)} ✕
                 </button>
               ))}
             </div>
@@ -337,7 +338,8 @@ export default function Ai({ project }: { project: Project }) {
 
         {phase === 'idle' && (
           <button className="btn ai" disabled={!hasKey} onClick={startIdentity}>
-            {project.brand.voice ? '🔄 Refazer identidade visual' : '✨ Começar criação guiada'}
+            <I n={project.brand.voice ? 'rotate' : 'sparkle'} size={17} />
+            {project.brand.voice ? ' Refazer identidade visual' : ' Começar criação guiada'}
           </button>
         )}
 
@@ -420,7 +422,7 @@ export default function Ai({ project }: { project: Project }) {
             </div>
             <div className="actions">
               <button className="btn ghost" onClick={() => setPhase('answering')}>← Voltar</button>
-              <button className="btn ai" onClick={confirmIdentity}>✓ Confirmar como Kit de Marca</button>
+              <button className="btn ai" onClick={confirmIdentity}><I n="check" size={17} /> Confirmar como Kit de Marca</button>
             </div>
           </>
         )}
@@ -428,14 +430,14 @@ export default function Ai({ project }: { project: Project }) {
 
       {/* ─── 6.2 pesquisa de nicho e ideias ─── */}
       <div className="ai-card">
-        <h3>🔍 Pesquisar ideias</h3>
+        <h3><I n="search" /> Pesquisar ideias</h3>
         <p className="muted">
           A IA analisa o que já existe na pasta deste projeto, pesquisa tendências do nicho na
           web e sugere ideias de post com copy e roteiro no tom de voz da marca. Todas as ideias
           ficam salvas no banco de ideias (módulo Notas).
         </p>
         <button className="btn ai" disabled={!hasKey || searching} onClick={searchIdeas}>
-          {searching ? 'Pesquisando o nicho…' : '🔍 Pesquisar ideias'}
+          <I n="search" size={17} /> {searching ? 'Pesquisando o nicho…' : 'Pesquisar ideias'}
         </button>
         {searching && (
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -446,24 +448,24 @@ export default function Ai({ project }: { project: Project }) {
 
         {ideas.map(item => (
           <div key={item.noteId} className="idea-card">
-            <b>💡 {item.idea.title}</b>
+            <b><I n="bulb" size={17} /> {item.idea.title}</b>
             <div className="part"><b>Copy</b><br />{item.idea.copy}</div>
             <div className="part"><b>Gancho</b><br />{item.idea.hook}</div>
             <div className="part"><b>Desenvolvimento</b><br />{item.idea.dev}</div>
             <div className="part"><b>CTA</b><br />{item.idea.cta}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {item.accepted ? (
-                <span className="badge ai">✓ Rascunho criado no Editor</span>
+                <span className="badge ai"><I n="check" size={12} /> Rascunho criado no Editor</span>
               ) : (
                 <button className="btn ai small" onClick={() => acceptIdea(item)}>
-                  ✓ Aceitar e montar rascunho no Editor
+                  <I n="check" size={15} /> Aceitar e montar rascunho no Editor
                 </button>
               )}
               <button
                 className="btn notes small"
                 onClick={() => go({ screen: 'project', projectId: project.id, tab: 'notas', noteId: item.noteId })}
               >
-                ✏️ Editar no módulo Notas
+                <I n="pencil" size={15} /> Editar no módulo Notas
               </button>
             </div>
           </div>

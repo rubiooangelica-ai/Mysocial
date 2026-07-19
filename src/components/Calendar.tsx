@@ -5,6 +5,7 @@ import {
   STATUS_LABEL, STATUS_ORDER,
   type ID, type Post, type PostStatus, type Project,
 } from '../types'
+import { I } from '../icons'
 
 type View = 'mes' | 'semana' | 'status'
 
@@ -107,7 +108,7 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
       setDraggingId(d.post.id)
       const ghost = document.createElement('div')
       ghost.className = 'drag-ghost post-chip'
-      ghost.textContent = '📌 ' + (d.post.title || 'Post')
+      ghost.textContent = d.post.title || 'Post'
       document.body.appendChild(ghost)
       d.ghost = ghost
     }
@@ -180,9 +181,9 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-cal)' }}>📅 Calendário</h2>
+        <h2 style={{ color: 'var(--m-cal)' }}><I n="calendar" size={24} /> Calendário</h2>
         <div className="spacer" />
-        <button className="btn cal" onClick={() => setCreatingDate(todayIso())}>＋ Novo post</button>
+        <button className="btn cal" onClick={() => setCreatingDate(todayIso())}><I n="plus" size={18} /> Novo post</button>
       </div>
 
       <div className="section-head" style={{ gap: 8 }}>
@@ -196,9 +197,9 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
         <div className="spacer" />
         {view !== 'status' && (
           <>
-            <button className="icon-btn" onClick={() => step(-1)}>‹</button>
+            <button className="icon-btn" onClick={() => step(-1)}><I n="chevL" /></button>
             <b style={{ minWidth: 130, textAlign: 'center' }}>{label}</b>
-            <button className="icon-btn" onClick={() => step(1)}>›</button>
+            <button className="icon-btn" onClick={() => step(1)}><I n="chevR" /></button>
           </>
         )}
       </div>
@@ -296,7 +297,7 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
                   const proj = projectOf(p)
                   return (
                     <button key={p.id} className="post-card-lg" onClick={() => setEditing(p)}>
-                      {d?.thumb ? <img src={d.thumb} alt="" /> : <div className="ph">🖼️</div>}
+                      {d?.thumb ? <img src={d.thumb} alt="" /> : <div className="ph"><I n="image" /></div>}
                       <div style={{ flex: 1 }}>
                         <b>{p.title || 'Post'}</b>
                         <span>
@@ -402,7 +403,7 @@ function PostSheet({
   return (
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={e => e.stopPropagation()}>
-        <h3>{post ? '✏️ Editar post' : '＋ Novo post'}</h3>
+        <h3><I n={post ? 'pencil' : 'plus'} /> {post ? 'Editar post' : 'Novo post'}</h3>
         <div className="field">
           <label>Título</label>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Post dica de terça" />
@@ -453,7 +454,7 @@ function PostSheet({
             <select style={{ flex: 1 }} value={noteId} onChange={e => setNoteId(e.target.value)}>
               <option value="">Nenhuma</option>
               {projNotes.map(n => (
-                <option key={n.id} value={n.id}>{n.kind === 'roteiro' ? '🎬 ' : '📝 '}{n.title || 'Sem título'}</option>
+                <option key={n.id} value={n.id}>{n.kind === 'roteiro' ? 'Roteiro · ' : 'Nota · '}{n.title || 'Sem título'}</option>
               ))}
             </select>
             {noteId && (

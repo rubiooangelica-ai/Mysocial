@@ -4,6 +4,7 @@ import { useNav } from '../nav'
 import { draftFromBrand } from '../designOps'
 import { makeThumb } from '../render'
 import type { ID, Note, NoteKind, Project } from '../types'
+import { I } from '../icons'
 
 type Filter = 'todas' | 'notas' | 'roteiros' | 'ideias' | 'ia'
 
@@ -44,20 +45,20 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-notes)' }}>📝 Notas & Roteiros</h2>
+        <h2 style={{ color: 'var(--m-notes)' }}><I n="note" size={24} /> Notas & Roteiros</h2>
         <div className="spacer" />
-        <button className="btn notes" onClick={() => create('nota')}>＋ Nota</button>
-        <button className="btn editor" onClick={() => create('roteiro')}>＋ Roteiro</button>
+        <button className="btn notes" onClick={() => create('nota')}><I n="plus" size={18} /> Nota</button>
+        <button className="btn editor" onClick={() => create('roteiro')}><I n="plus" size={18} /> Roteiro</button>
       </div>
 
       <div className="chip-row">
         {(
           [
             ['todas', 'Todas'],
-            ['notas', '📝 Notas'],
-            ['roteiros', '🎬 Roteiros'],
-            ['ideias', '💡 Ideias soltas'],
-            ['ia', '✨ Geradas por IA'],
+            ['notas', 'Notas'],
+            ['roteiros', 'Roteiros'],
+            ['ideias', 'Ideias soltas'],
+            ['ia', 'Geradas por IA'],
           ] as [Filter, string][]
         ).map(([f, label]) => (
           <button key={f} className={'chip' + (filter === f ? ' on' : '')} onClick={() => setFilter(f)}>
@@ -68,7 +69,7 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
 
       {notes.length === 0 ? (
         <div className="empty">
-          <div className="big">💡</div>
+          <div className="big"><I n="bulb" size={34} /></div>
           <b>Nada por aqui ainda</b>
           <p>Anote ideias soltas, referências e roteiros de vídeo.<br />Tudo pode ser vinculado a um design e a uma data.</p>
         </div>
@@ -78,15 +79,15 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
             const post = n.postId ? posts.find(p => p.id === n.postId) : undefined
             return (
               <button key={n.id} className={'note-card' + (n.kind === 'roteiro' ? ' roteiro' : '')} onClick={() => setOpenId(n.id)}>
-                <b>{n.kind === 'roteiro' ? '🎬 ' : '📝 '}{n.title || 'Sem título'}</b>
+                <b><I n={n.kind === 'roteiro' ? 'film' : 'note'} size={17} /> {n.title || 'Sem título'}</b>
                 <p>{n.kind === 'roteiro' ? n.hook || n.body : n.body}</p>
                 <div className="badges">
-                  {n.fromAI && <span className="badge ai">✨ IA</span>}
-                  {n.designId && <span className="badge link">🎨 design</span>}
+                  {n.fromAI && <span className="badge ai"><I n="sparkle" size={12} /> IA</span>}
+                  {n.designId && <span className="badge link"><I n="palette" size={12} /> design</span>}
                   {post?.date && (
-                    <span className="badge link">📅 {post.date.slice(8)}/{post.date.slice(5, 7)}</span>
+                    <span className="badge link"><I n="calendar" size={12} /> {post.date.slice(8)}/{post.date.slice(5, 7)}</span>
                   )}
-                  {!post?.date && !n.designId && <span className="badge">💡 ideia solta</span>}
+                  {!post?.date && !n.designId && <span className="badge"><I n="bulb" size={12} /> ideia solta</span>}
                 </div>
               </button>
             )
@@ -150,14 +151,14 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div className="chip-row">
             <button className={'chip' + (note.kind === 'nota' ? ' on' : '')} onClick={() => set({ kind: 'nota' })}>
-              📝 Nota
+              <I n="note" size={15} /> Nota
             </button>
             <button className={'chip' + (note.kind === 'roteiro' ? ' on' : '')} onClick={() => set({ kind: 'roteiro' })}>
-              🎬 Roteiro
+              <I n="film" size={15} /> Roteiro
             </button>
           </div>
           <div className="spacer" />
-          {note.fromAI && <span className="badge ai">✨ gerada por IA</span>}
+          {note.fromAI && <span className="badge ai"><I n="sparkle" size={12} /> gerada por IA</span>}
         </div>
 
         <input
@@ -170,17 +171,17 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
         {note.kind === 'roteiro' && (
           <>
             <div className="field">
-              <label>🪝 Gancho (hook)</label>
+              <label>Gancho (hook)</label>
               <textarea rows={2} value={note.hook} placeholder="A primeira frase que segura a atenção…"
                 onChange={e => set({ hook: e.target.value })} />
             </div>
             <div className="field">
-              <label>🎬 Desenvolvimento</label>
+              <label>Desenvolvimento</label>
               <textarea rows={4} value={note.dev} placeholder="O corpo do vídeo, passo a passo…"
                 onChange={e => set({ dev: e.target.value })} />
             </div>
             <div className="field">
-              <label>📣 CTA (chamada para ação)</label>
+              <label>CTA (chamada para ação)</label>
               <textarea rows={2} value={note.cta} placeholder="O que a audiência deve fazer no final…"
                 onChange={e => set({ cta: e.target.value })} />
             </div>
@@ -205,8 +206,8 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
               onChange={e => set({ designId: e.target.value || undefined })}
               style={{ flex: 1, minWidth: 160 }}
             >
-              <option value="">🎨 Sem design vinculado</option>
-              {projDesigns.map(d => <option key={d.id} value={d.id}>🎨 {d.name}</option>)}
+              <option value="">Sem design vinculado</option>
+              {projDesigns.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             {note.designId ? (
               <button
@@ -217,21 +218,21 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
               </button>
             ) : (
               <button className="btn editor small" onClick={createDesign}>
-                ＋ Criar design desta ideia
+                <I n="plus" size={15} /> Criar design desta ideia
               </button>
             )}
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             {linkedPost?.date ? (
               <span className="badge link">
-                📅 Agendada para {linkedPost.date.slice(8)}/{linkedPost.date.slice(5, 7)}
+                <I n="calendar" size={12} /> Agendada para {linkedPost.date.slice(8)}/{linkedPost.date.slice(5, 7)}
                 {linkedPost.time ? ` às ${linkedPost.time}` : ''}
               </span>
             ) : (
               <>
                 <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} />
                 <button className="btn cal small" onClick={schedule} disabled={!schedDate}>
-                  📅 Agendar no calendário
+                  <I n="calendar" size={15} /> Agendar no calendário
                 </button>
               </>
             )}

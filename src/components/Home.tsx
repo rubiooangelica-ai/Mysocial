@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { getAssetUrlSync, useStore } from '../store'
 import { useNav } from '../nav'
 import { STATUS_LABEL, type Project } from '../types'
+import { I } from '../icons'
 
 const ACCENTS = ['#7c5cff', '#2f80ed', '#e8930c', '#0aa984', '#ef476f', '#118ab2', '#8338ec', '#fb5607']
 
@@ -80,16 +81,16 @@ export default function Home() {
   return (
     <div className="app">
       <div className="topbar">
-        <h1>✦ MySocial</h1>
+        <h1 className="brand">MySocial</h1>
         <div className="spacer" />
         <button className="btn cal" onClick={() => go({ screen: 'global-cal' })}>
-          📅 Calendário geral
+          <I n="calendar" size={18} /> Calendário geral
         </button>
       </div>
       <div className="screen">
         {projects.length === 0 && (
           <div className="empty" style={{ paddingTop: 80 }}>
-            <div className="big">🗂️</div>
+            <div className="big"><I n="folder" size={34} /></div>
             <b>Bem-vinda ao seu estúdio de social media</b>
             <p>Crie um projeto para cada empresa/cliente.<br />Cada projeto reúne Editor, Calendário, Notas e Assistente de IA.</p>
           </div>
@@ -99,7 +100,7 @@ export default function Home() {
             <ProjectCard key={p.id} project={p} />
           ))}
           <button className="card-new" onClick={() => setCreating(true)}>
-            <span className="plus">＋</span>
+            <span className="plus"><I n="plus" size={22} /></span>
             Novo projeto
           </button>
         </div>

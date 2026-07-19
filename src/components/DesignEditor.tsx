@@ -7,6 +7,7 @@ import {
 } from '../types'
 import { exportDesign, makeThumb } from '../render'
 import { resizeLayers } from '../designOps'
+import { I } from '../icons'
 
 type SideTab = 'marca' | 'camadas' | 'ajustes'
 
@@ -243,40 +244,40 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
 
   const layerLabel = (l: Layer) =>
     l.type === 'text' ? `Texto: ${(l as TextLayer).text.slice(0, 18)}`
-    : l.type === 'image' ? '🖼️ Imagem'
+    : l.type === 'image' ? 'Imagem'
     : l.type === 'icon' ? `Ícone ${l.glyph}`
     : `Forma (${{ rect: 'retângulo', circle: 'círculo', triangle: 'triângulo', line: 'linha' }[l.shape]})`
 
   return (
     <div className="editor-root">
       <div className="editor-top">
-        <button className="icon-btn" style={{ background: '#35343f', color: '#fff' }} onClick={saveThumbAndBack}>←</button>
+        <button className="icon-btn" onClick={saveThumbAndBack}><I n="back" /></button>
         <input
           className="name"
           value={design.name}
           onChange={e => updateDesign(design.id, { name: e.target.value })}
         />
         <select
+          className="dark"
           value={design.category ?? ''}
           onChange={e => updateDesign(design.id, { category: e.target.value || undefined })}
-          style={{ background: '#35343f', color: '#fff', border: 'none', minHeight: 40 }}
         >
           <option value="">Sem pasta</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <div className="spacer" />
-        <button className="icon-btn" style={{ background: '#35343f', color: '#fff' }} onClick={undo} title="Desfazer">↩︎</button>
-        <button className="icon-btn" style={{ background: '#35343f', color: '#fff' }} onClick={redo} title="Refazer">↪︎</button>
-        <button className="btn small" style={{ background: '#35343f', color: '#fff' }} onClick={() => setResizeOpen(true)}>⇄ Formato</button>
-        <button className="btn small" style={{ background: '#35343f', color: '#fff' }} onClick={saveAsTemplate}>📐 Salvar template</button>
-        <button className="btn small editor" onClick={() => setExportOpen(true)}>⬇️ Exportar</button>
+        <button className="icon-btn" onClick={undo} title="Desfazer"><I n="undo" size={18} /></button>
+        <button className="icon-btn" onClick={redo} title="Refazer"><I n="redo" size={18} /></button>
+        <button className="btn small dark" onClick={() => setResizeOpen(true)}><I n="resize" size={16} /> Formato</button>
+        <button className="btn small dark" onClick={saveAsTemplate}><I n="grid" size={16} /> Salvar template</button>
+        <button className="btn small editor" onClick={() => setExportOpen(true)}><I n="download" size={16} /> Exportar</button>
       </div>
 
       <div className="editor-main">
         <div className="tool-rail">
           <button className="icon-btn" title="Título" onClick={() => addText('title')}>T</button>
           <button className="icon-btn" title="Texto" style={{ fontSize: 14 }} onClick={() => addText('body')}>t</button>
-          <button className="icon-btn" title="Imagem" onClick={() => fileRef.current?.click()}>🖼️</button>
+          <button className="icon-btn" title="Imagem" onClick={() => fileRef.current?.click()}><I n="image" /></button>
           <button className="icon-btn" title="Retângulo" onClick={() => addShape('rect')}>▭</button>
           <button className="icon-btn" title="Círculo" onClick={() => addShape('circle')}>◯</button>
           <button className="icon-btn" title="Triângulo" onClick={() => addShape('triangle')}>△</button>
@@ -364,8 +365,8 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
                   )}
                   {isSel && (
                     <>
-                      <div className="handle br" onPointerDown={e => onLayerPointerDown(e, l, 'resize')}>⤡</div>
-                      <div className="handle rot" onPointerDown={e => onLayerPointerDown(e, l, 'rotate')}>⟳</div>
+                      <div className="handle br" onPointerDown={e => onLayerPointerDown(e, l, 'resize')}><I n="resize" size={15} /></div>
+                      <div className="handle rot" onPointerDown={e => onLayerPointerDown(e, l, 'rotate')}><I n="rotate" size={15} /></div>
                     </>
                   )}
                 </div>
@@ -417,7 +418,7 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
                 {brand.logoAssetId && (
                   <div className="field">
                     <label>Logo</label>
-                    <button className="btn ghost" onClick={() => addImage(brand.logoAssetId!)}>＋ Inserir logo</button>
+                    <button className="btn ghost" onClick={() => addImage(brand.logoAssetId!)}><I n="plus" size={16} /> Inserir logo</button>
                   </div>
                 )}
                 {brand.elementAssetIds.length > 0 && (
@@ -487,7 +488,7 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
                       <button onClick={e => { e.stopPropagation(); moveLayer(l.id, 1) }} title="Para frente">▲</button>
                       <button onClick={e => { e.stopPropagation(); moveLayer(l.id, -1) }} title="Para trás">▼</button>
                       <button onClick={e => { e.stopPropagation(); duplicateLayer(l) }} title="Duplicar">⧉</button>
-                      <button onClick={e => { e.stopPropagation(); deleteLayer(l.id) }} title="Excluir">🗑️</button>
+                      <button onClick={e => { e.stopPropagation(); deleteLayer(l.id) }} title="Excluir"><I n="trash" size={16} /></button>
                     </div>
                   ))}
                 </div>
@@ -599,7 +600,7 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="btn ghost" onClick={() => duplicateLayer(sel)}>⧉ Duplicar</button>
-                  <button className="btn danger" onClick={() => deleteLayer(sel.id)}>🗑️ Excluir</button>
+                  <button className="btn danger" onClick={() => deleteLayer(sel.id)}><I n="trash" size={16} /> Excluir</button>
                 </div>
               </>
             )}
@@ -610,7 +611,7 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
       {exportOpen && (
         <div className="overlay" onClick={() => setExportOpen(false)}>
           <div className="sheet" onClick={e => e.stopPropagation()}>
-            <h3>⬇️ Exportar design</h3>
+            <h3><I n="download" /> Exportar design</h3>
             <p className="muted">A imagem é baixada pronta para postagem manual.</p>
             <div className="prop-grid">
               <button className="btn primary" onClick={() => { exportDesign(design, 'png', 1); setExportOpen(false) }}>
@@ -633,7 +634,7 @@ export default function DesignEditor({ projectId, designId }: { projectId: ID; d
       {resizeOpen && (
         <div className="overlay" onClick={() => setResizeOpen(false)}>
           <div className="sheet" onClick={e => e.stopPropagation()}>
-            <h3>⇄ Redimensionar para outro formato</h3>
+            <h3><I n="resize" /> Redimensionar para outro formato</h3>
             <p className="muted">
               Cria uma cópia deste design no novo formato, com os elementos ajustados
               proporcionalmente — você pode refinar manualmente depois.

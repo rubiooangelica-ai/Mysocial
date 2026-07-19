@@ -1,6 +1,7 @@
 import { useStore } from '../store'
 import { useNav } from '../nav'
 import { CalendarCore } from './Calendar'
+import { I } from '../icons'
 
 // Visão consolidada: todos os projetos juntos, para enxergar a carga
 // de trabalho da semana/mês inteira.
@@ -11,14 +12,16 @@ export default function GlobalCalendar() {
   return (
     <div className="app">
       <div className="topbar">
-        <button className="icon-btn" onClick={() => go({ screen: 'home' })}>←</button>
-        <h1>📅 Calendário geral</h1>
+        <button className="icon-btn" onClick={() => go({ screen: 'home' })}><I n="back" /></button>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--m-cal)' }}>
+          <I n="calendar" size={22} /> Calendário geral
+        </h1>
         <div className="spacer" />
       </div>
       <div className="screen">
         {projects.length === 0 ? (
           <div className="empty" style={{ paddingTop: 80 }}>
-            <div className="big">📅</div>
+            <div className="big"><I n="calendar" size={34} /></div>
             <b>Crie um projeto primeiro</b>
             <p>O calendário geral mostra os posts de todos os seus clientes juntos.</p>
           </div>
