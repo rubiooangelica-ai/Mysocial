@@ -235,6 +235,12 @@ export default function Ai({ project }: { project: Project }) {
             O assistente usa a API da Anthropic (Claude) com visão multimodal e busca na web.
             Cole sua chave de API — ela fica salva apenas neste dispositivo.
           </p>
+          <ol className="muted" style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 4, fontSize: 14 }}>
+            <li>Acesse <b>console.anthropic.com</b> e crie uma conta (ou entre na sua).</li>
+            <li>Em <b>Billing</b>, adicione um método de pagamento ou créditos (uso cobrado por consumo — centavos por pesquisa).</li>
+            <li>Em <b>API Keys</b>, toque em <b>Create Key</b> e copie a chave (começa com <b>sk-ant-</b>).</li>
+            <li>Cole a chave abaixo e toque em Salvar. Pronto — não precisa repetir.</li>
+          </ol>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               style={{ flex: 1 }}
