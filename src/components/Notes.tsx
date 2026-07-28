@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useStore } from '../store'
+import { shortDate, useStore } from '../store'
 import { useNav } from '../nav'
-import { draftFromBrand } from '../designOps'
-import { makeThumb } from '../render'
 import type { ID, Note, NoteKind, Project } from '../types'
 import { I } from '../icons'
 
-type Filter = 'todas' | 'notas' | 'roteiros' | 'ideias' | 'ia'
+type Filter = 'todas' | 'roteiros' | 'notas' | 'ideias' | 'ia'
 
 export default function Notes({ project, openNoteId }: { project: Project; openNoteId?: ID }) {
   const allNotes = useStore(s => s.notes)
@@ -22,11 +20,11 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
   const notes = useMemo(() => {
     const mine = allNotes.filter(n => n.projectId === project.id)
     const filtered = mine.filter(n => {
-      if (filter === 'notas') return n.kind === 'nota'
       if (filter === 'roteiros') return n.kind === 'roteiro'
+      if (filter === 'notas') return n.kind === 'nota'
       if (filter === 'ia') return n.fromAI
       if (filter === 'ideias') {
-        // banco de ideias: sem vínculo com post/data ainda
+        // banco de ideias: ainda não virou post com data
         const post = n.postId ? posts.find(p => p.id === n.postId) : undefined
         return !post?.date
       }
@@ -45,19 +43,19 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-notes)' }}><I n="note" size={24} /> Notas & Roteiros</h2>
+        <h2 style={{ color: 'var(--m-notes)' }}><I n="note" size={24} /> Roteiros & Ideias</h2>
         <div className="spacer" />
-        <button className="btn notes" onClick={() => create('nota')}><I n="plus" size={18} /> Nota</button>
-        <button className="btn editor" onClick={() => create('roteiro')}><I n="plus" size={18} /> Roteiro</button>
+        <button className="btn notes" onClick={() => create('roteiro')}><I n="plus" size={18} /> Roteiro</button>
+        <button className="btn ghost" onClick={() => create('nota')}><I n="plus" size={18} /> Ideia solta</button>
       </div>
 
       <div className="chip-row">
         {(
           [
-            ['todas', 'Todas'],
-            ['notas', 'Notas'],
+            ['todas', 'Tudo'],
             ['roteiros', 'Roteiros'],
-            ['ideias', 'Ideias soltas'],
+            ['notas', 'Notas e ideias'],
+            ['ideias', 'Ainda sem data'],
             ['ia', 'Geradas por IA'],
           ] as [Filter, string][]
         ).map(([f, label]) => (
@@ -71,23 +69,32 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
         <div className="empty">
           <div className="big"><I n="bulb" size={34} /></div>
           <b>Nada por aqui ainda</b>
-          <p>Anote ideias soltas, referências e roteiros de vídeo.<br />Tudo pode ser vinculado a um design e a uma data.</p>
+          <p>
+            Guarde ideias soltas, referências e roteiros de vídeo.<br />
+            Quando a ideia amadurecer, ela vira um post no cronograma.
+          </p>
         </div>
       ) : (
         <div className="note-list">
           {notes.map(n => {
             const post = n.postId ? posts.find(p => p.id === n.postId) : undefined
             return (
-              <button key={n.id} className={'note-card' + (n.kind === 'roteiro' ? ' roteiro' : '')} onClick={() => setOpenId(n.id)}>
+              <button
+                key={n.id}
+                className={'note-card' + (n.kind === 'roteiro' ? ' roteiro' : '')}
+                onClick={() => setOpenId(n.id)}
+              >
                 <b><I n={n.kind === 'roteiro' ? 'film' : 'note'} size={17} /> {n.title || 'Sem título'}</b>
-                <p>{n.kind === 'roteiro' ? n.hook || n.body : n.body}</p>
+                <p>{n.kind === 'roteiro' ? n.hook || n.dev || n.body : n.body}</p>
                 <div className="badges">
                   {n.fromAI && <span className="badge ai"><I n="sparkle" size={12} /> IA</span>}
-                  {n.designId && <span className="badge link"><I n="palette" size={12} /> design</span>}
-                  {post?.date && (
-                    <span className="badge link"><I n="calendar" size={12} /> {post.date.slice(8)}/{post.date.slice(5, 7)}</span>
+                  {post?.date ? (
+                    <span className="badge link"><I n="calendar" size={12} /> {shortDate(post.date)}</span>
+                  ) : post ? (
+                    <span className="badge link"><I n="pin" size={12} /> no cronograma</span>
+                  ) : (
+                    <span className="badge"><I n="bulb" size={12} /> ideia solta</span>
                   )}
-                  {!post?.date && !n.designId && <span className="badge"><I n="bulb" size={12} /> ideia solta</span>}
                 </div>
               </button>
             )
@@ -103,46 +110,27 @@ export default function Notes({ project, openNoteId }: { project: Project; openN
 function NoteSheet({ note, project, onClose }: { note: Note; project: Project; onClose: () => void }) {
   const updateNote = useStore(s => s.updateNote)
   const removeNote = useStore(s => s.removeNote)
-  const designs = useStore(s => s.designs)
   const posts = useStore(s => s.posts)
   const addPost = useStore(s => s.addPost)
-  const addDesign = useStore(s => s.addDesign)
-  const updateDesign = useStore(s => s.updateDesign)
-  const updatePost = useStore(s => s.updatePost)
   const go = useNav(s => s.go)
 
   const [schedDate, setSchedDate] = useState('')
-  const projDesigns = designs.filter(d => d.projectId === project.id && !d.isTemplate)
   const linkedPost = note.postId ? posts.find(p => p.id === note.postId) : undefined
 
   const set = (patch: Partial<Note>) => updateNote(note.id, patch)
 
-  // "a ideia" → "o roteiro" → "o design final": cria rascunho no Editor
-  // usando o Kit de Marca do projeto.
-  const createDesign = async () => {
-    const draft = draftFromBrand(project, 'feed-1x1', note.title || 'Nova ideia', note.hook || undefined)
-    const d = addDesign(draft)
-    const thumb = await makeThumb({ ...d })
-    updateDesign(d.id, { thumb })
-    set({ designId: d.id })
-    if (linkedPost) updatePost(linkedPost.id, { designId: d.id })
-    go({ screen: 'design', projectId: project.id, designId: d.id })
-  }
-
-  const schedule = () => {
-    if (linkedPost) {
-      updatePost(linkedPost.id, { date: schedDate || undefined })
-    } else {
-      const p = addPost({
-        projectId: project.id,
-        title: note.title || 'Post',
-        date: schedDate || undefined,
-        status: 'rascunho',
-        designId: note.designId,
-        noteId: note.id,
-      })
-      set({ postId: p.id })
-    }
+  /** A ideia vira um post no cronograma, já com a legenda de partida. */
+  const createPost = (date?: string) => {
+    const p = addPost({
+      projectId: project.id,
+      title: note.title || 'Post',
+      date,
+      status: 'rascunho',
+      caption: note.kind === 'roteiro' ? note.body || note.cta : note.body,
+      noteId: note.id,
+    })
+    set({ postId: p.id })
+    go({ screen: 'project', projectId: project.id, tab: 'cronograma', postId: p.id })
   }
 
   return (
@@ -150,11 +138,11 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
       <div className="sheet wide" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div className="chip-row">
-            <button className={'chip' + (note.kind === 'nota' ? ' on' : '')} onClick={() => set({ kind: 'nota' })}>
-              <I n="note" size={15} /> Nota
-            </button>
             <button className={'chip' + (note.kind === 'roteiro' ? ' on' : '')} onClick={() => set({ kind: 'roteiro' })}>
               <I n="film" size={15} /> Roteiro
+            </button>
+            <button className={'chip' + (note.kind === 'nota' ? ' on' : '')} onClick={() => set({ kind: 'nota' })}>
+              <I n="note" size={15} /> Nota livre
             </button>
           </div>
           <div className="spacer" />
@@ -177,7 +165,7 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
             </div>
             <div className="field">
               <label>Desenvolvimento</label>
-              <textarea rows={4} value={note.dev} placeholder="O corpo do vídeo, passo a passo…"
+              <textarea rows={5} value={note.dev} placeholder="O corpo do vídeo, passo a passo…"
                 onChange={e => set({ dev: e.target.value })} />
             </div>
             <div className="field">
@@ -189,61 +177,52 @@ function NoteSheet({ note, project, onClose }: { note: Note; project: Project; o
         )}
 
         <div className="field">
-          <label>{note.kind === 'roteiro' ? 'Observações livres' : 'Texto'}</label>
+          <label>{note.kind === 'roteiro' ? 'Legenda e observações' : 'Texto'}</label>
           <textarea
-            rows={note.kind === 'roteiro' ? 3 : 8}
+            rows={note.kind === 'roteiro' ? 4 : 9}
             value={note.body}
-            placeholder="Ideias soltas, referências, insights…"
+            placeholder="Ideias soltas, referências, insights, rascunho de legenda…"
             onChange={e => set({ body: e.target.value })}
           />
         </div>
 
         <div className="field">
-          <label>Vínculos</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <select
-              value={note.designId ?? ''}
-              onChange={e => set({ designId: e.target.value || undefined })}
-              style={{ flex: 1, minWidth: 160 }}
-            >
-              <option value="">Sem design vinculado</option>
-              {projDesigns.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            {note.designId ? (
-              <button
-                className="btn editor small"
-                onClick={() => go({ screen: 'design', projectId: project.id, designId: note.designId! })}
-              >
-                Abrir design
-              </button>
-            ) : (
-              <button className="btn editor small" onClick={createDesign}>
-                <I n="plus" size={15} /> Criar design desta ideia
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {linkedPost?.date ? (
+          <label>No cronograma</label>
+          {linkedPost ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <span className="badge link">
-                <I n="calendar" size={12} /> Agendada para {linkedPost.date.slice(8)}/{linkedPost.date.slice(5, 7)}
-                {linkedPost.time ? ` às ${linkedPost.time}` : ''}
+                <I n="calendar" size={12} />
+                {linkedPost.date
+                  ? ` Agendada para ${shortDate(linkedPost.date)}${linkedPost.time ? ` às ${linkedPost.time}` : ''}`
+                  : ' No cronograma, ainda sem data'}
               </span>
-            ) : (
-              <>
-                <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} />
-                <button className="btn cal small" onClick={schedule} disabled={!schedDate}>
-                  <I n="calendar" size={15} /> Agendar no calendário
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                className="btn cal small"
+                onClick={() =>
+                  go({ screen: 'project', projectId: project.id, tab: 'cronograma', postId: linkedPost.id })
+                }
+              >
+                Abrir post
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button className="btn cal small" onClick={() => createPost(schedDate || undefined)}>
+                <I n="plus" size={15} /> Transformar em post
+              </button>
+              <input type="date" value={schedDate} onChange={e => setSchedDate(e.target.value)} />
+              <span className="muted" style={{ fontSize: 12 }}>
+                A data é opcional — sem ela o post fica no backlog.
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="actions">
           <button
             className="btn danger"
             onClick={() => {
-              if (confirm('Excluir esta nota?')) {
+              if (confirm('Excluir esta anotação?')) {
                 removeNote(note.id)
                 onClose()
               }

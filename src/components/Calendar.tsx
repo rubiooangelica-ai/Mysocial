@@ -1,9 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
-import { nextStatus, useStore } from '../store'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  fileToDataUrl, getAssetUrlSync, makeThumb, nextStatus, shortDate, todayIso, useStore,
+} from '../store'
 import { useNav } from '../nav'
 import {
-  STATUS_LABEL, STATUS_ORDER,
-  type ID, type Post, type PostStatus, type Project,
+  POST_FORMATS, STATUS_LABEL, STATUS_ORDER,
+  type ID, type Post, type PostFormat, type PostStatus, type Project,
 } from '../types'
 import { I } from '../icons'
 
@@ -18,7 +20,6 @@ const STATUS_COLOR: Record<PostStatus, string> = {
 }
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
-const todayIso = () => iso(new Date())
 
 function monthGrid(year: number, month: number): { date: string; inMonth: boolean }[] {
   const first = new Date(Date.UTC(year, month, 1))
@@ -47,11 +48,12 @@ function weekDates(anchor: Date): string[] {
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
-// ─── núcleo compartilhado (projeto único ou visão consolidada) ────────────
+// ─── núcleo compartilhado (um cliente ou visão consolidada) ───────────────
 
-export function CalendarCore({ projects, fixedProject }: { projects: Project[]; fixedProject?: Project }) {
+export function CalendarCore({
+  projects, fixedProject, openPostId,
+}: { projects: Project[]; fixedProject?: Project; openPostId?: ID }) {
   const allPosts = useStore(s => s.posts)
-  const designs = useStore(s => s.designs)
   const notes = useStore(s => s.notes)
   const addPost = useStore(s => s.addPost)
   const updatePost = useStore(s => s.updatePost)
@@ -61,8 +63,12 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
   const [view, setView] = useState<View>('mes')
   const [cursor, setCursor] = useState(() => new Date())
   const [filterId, setFilterId] = useState<ID | 'todos'>('todos')
-  const [editing, setEditing] = useState<Post | null>(null)
+  const [editingId, setEditingId] = useState<ID | null>(openPostId ?? null)
   const [creatingDate, setCreatingDate] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (openPostId) setEditingId(openPostId)
+  }, [openPostId])
 
   const visibleProjects = fixedProject
     ? [fixedProject]
@@ -75,10 +81,10 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
     return allPosts.filter(p => ids.has(p.projectId))
   }, [allPosts, visibleProjects])
 
+  const editing = editingId ? allPosts.find(p => p.id === editingId) : undefined
   const projectOf = (p: Post) => projects.find(x => x.id === p.projectId)
-  const designOf = (p: Post) => (p.designId ? designs.find(d => d.id === p.designId) : undefined)
 
-  // ─── drag and drop por toque ───
+  // ─── arrastar e soltar por toque ───
   const drag = useRef<{
     post: Post
     startX: number
@@ -133,13 +139,12 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
         updatePost(post.id, { date: cell.date, ...(cell.time ? { time: cell.time } : {}) })
       }
     } else {
-      setEditing(post)
+      setEditingId(post.id)
     }
   }
 
   const chip = (p: Post, showThumb = true) => {
     const proj = projectOf(p)
-    const d = designOf(p)
     return (
       <button
         key={p.id}
@@ -149,13 +154,12 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
         onPointerMove={onChipPointerMove}
         onPointerUp={e => onChipPointerUp(e, p)}
       >
-        {showThumb && d?.thumb && <img src={d.thumb} alt="" draggable={false} />}
+        {showThumb && p.thumb && <img src={p.thumb} alt="" draggable={false} />}
         <span className="t">{p.time ? p.time + ' ' : ''}{p.title || 'Post'}</span>
       </button>
     )
   }
 
-  // ─── cabeçalho de navegação ───
   const label =
     view === 'semana'
       ? (() => {
@@ -177,13 +181,16 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
       .sort((a, b) => (a.time ?? '99').localeCompare(b.time ?? '99'))
 
   const HOURS = Array.from({ length: 17 }, (_, i) => i + 6) // 06h–22h
+  const noDate = posts.filter(p => !p.date)
 
   return (
     <div className="section">
       <div className="section-head">
-        <h2 style={{ color: 'var(--m-cal)' }}><I n="calendar" size={24} /> Calendário</h2>
+        <h2 style={{ color: 'var(--m-cal)' }}><I n="calendar" size={24} /> Cronograma</h2>
         <div className="spacer" />
-        <button className="btn cal" onClick={() => setCreatingDate(todayIso())}><I n="plus" size={18} /> Novo post</button>
+        <button className="btn cal" onClick={() => setCreatingDate(todayIso())}>
+          <I n="plus" size={18} /> Novo post
+        </button>
       </div>
 
       <div className="section-head" style={{ gap: 8 }}>
@@ -207,7 +214,7 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
       {!fixedProject && projects.length > 1 && (
         <div className="chip-row">
           <button className={'chip' + (filterId === 'todos' ? ' on' : '')} onClick={() => setFilterId('todos')}>
-            Todos os projetos
+            Todos os clientes
           </button>
           {projects.map(p => (
             <button
@@ -276,7 +283,7 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
             })}
           </div>
           <p className="muted" style={{ marginTop: 8 }}>
-            Posts sem horário aparecem às 06h. Arraste um card para mudar dia/horário.
+            Posts sem horário aparecem às 06h. Arraste um card para mudar dia ou horário.
           </p>
         </div>
       )}
@@ -293,18 +300,20 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
                 .filter(p => p.status === st)
                 .sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'))
                 .map(p => {
-                  const d = designOf(p)
                   const proj = projectOf(p)
                   return (
-                    <button key={p.id} className="post-card-lg" onClick={() => setEditing(p)}>
-                      {d?.thumb ? <img src={d.thumb} alt="" /> : <div className="ph"><I n="image" /></div>}
-                      <div style={{ flex: 1 }}>
-                        <b>{p.title || 'Post'}</b>
-                        <span>
-                          {p.date ? `${p.date.slice(8)}/${p.date.slice(5, 7)}` : 'Sem data'}
-                          {p.time ? ` · ${p.time}` : ''}
-                          {!fixedProject && proj ? ` · ${proj.name}` : ''}
-                        </span>
+                    <div key={p.id} className="post-card-lg" onClick={() => setEditingId(p.id)}>
+                      <div className="pc-main">
+                        {p.thumb ? <img src={p.thumb} alt="" /> : <div className="ph"><I n="image" /></div>}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <b>{p.title || 'Post'}</b>
+                          <span>
+                            {p.date ? shortDate(p.date) : 'Sem data'}
+                            {p.time ? ` · ${p.time}` : ''}
+                            {p.format ? ` · ${p.format}` : ''}
+                            {!fixedProject && proj ? ` · ${proj.name}` : ''}
+                          </span>
+                        </div>
                       </div>
                       {nextStatus[st] && (
                         <button
@@ -314,10 +323,10 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
                             updatePost(p.id, { status: nextStatus[st]! })
                           }}
                         >
-                          → {STATUS_LABEL[nextStatus[st]!]}
+                          Marcar como {STATUS_LABEL[nextStatus[st]!].toLowerCase()}
                         </button>
                       )}
-                    </button>
+                    </div>
                   )
                 })}
             </div>
@@ -325,46 +334,61 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
         </div>
       )}
 
+      {noDate.length > 0 && view !== 'status' && (
+        <>
+          <div className="section-head" style={{ marginTop: 6 }}>
+            <h2 style={{ fontSize: 18 }}>Sem data ainda · {noDate.length}</h2>
+          </div>
+          <div className="chip-row">
+            {noDate.map(p => (
+              <button key={p.id} className="chip" onClick={() => setEditingId(p.id)}>
+                {p.title || 'Post'}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {(editing || creatingDate) && (
         <PostSheet
-          post={editing ?? undefined}
+          key={editing?.id ?? 'novo'}
+          post={editing}
           defaultDate={creatingDate ?? undefined}
-          projects={visibleProjects}
+          projects={visibleProjects.length ? visibleProjects : projects}
           fixedProject={fixedProject}
           onClose={() => {
-            setEditing(null)
+            setEditingId(null)
             setCreatingDate(null)
           }}
           onSave={data => {
             if (editing) updatePost(editing.id, data)
             else
               addPost({
-                projectId: data.projectId ?? fixedProject?.id ?? visibleProjects[0].id,
+                projectId: data.projectId ?? fixedProject?.id ?? projects[0].id,
                 title: data.title ?? '',
                 date: data.date,
                 time: data.time,
                 status: data.status ?? 'rascunho',
-                designId: data.designId,
+                format: data.format,
+                caption: data.caption,
+                imageAssetId: data.imageAssetId,
+                thumb: data.thumb,
                 noteId: data.noteId,
               })
-            setEditing(null)
+            setEditingId(null)
             setCreatingDate(null)
           }}
           onDelete={
             editing
               ? () => {
                   removePost(editing.id)
-                  setEditing(null)
+                  setEditingId(null)
                 }
               : undefined
           }
-          onOpenDesign={id => {
-            const d = designs.find(x => x.id === id)
-            if (d) go({ screen: 'design', projectId: d.projectId, designId: d.id })
-          }}
           onOpenNote={id => {
             const n = notes.find(x => x.id === id)
-            if (n) go({ screen: 'project', projectId: n.projectId, tab: 'notas', noteId: n.id })
+            if (n) go({ screen: 'project', projectId: n.projectId, tab: 'roteiros', noteId: n.id })
           }}
         />
       )}
@@ -375,7 +399,7 @@ export function CalendarCore({ projects, fixedProject }: { projects: Project[]; 
 // ─── modal de criação/edição de post ──────────────────────────────────────
 
 function PostSheet({
-  post, defaultDate, projects, fixedProject, onClose, onSave, onDelete, onOpenDesign, onOpenNote,
+  post, defaultDate, projects, fixedProject, onClose, onSave, onDelete, onOpenNote,
 }: {
   post?: Post
   defaultDate?: string
@@ -384,38 +408,64 @@ function PostSheet({
   onClose: () => void
   onSave: (data: Partial<Post>) => void
   onDelete?: () => void
-  onOpenDesign: (id: ID) => void
   onOpenNote: (id: ID) => void
 }) {
-  const designs = useStore(s => s.designs)
   const notes = useStore(s => s.notes)
+  const addAsset = useStore(s => s.addAsset)
+  const removeAsset = useStore(s => s.removeAsset)
   const [title, setTitle] = useState(post?.title ?? '')
   const [projectId, setProjectId] = useState(post?.projectId ?? fixedProject?.id ?? projects[0]?.id)
   const [date, setDate] = useState(post?.date ?? defaultDate ?? '')
   const [time, setTime] = useState(post?.time ?? '')
   const [status, setStatus] = useState<PostStatus>(post?.status ?? 'rascunho')
-  const [designId, setDesignId] = useState(post?.designId ?? '')
+  const [format, setFormat] = useState<PostFormat | ''>(post?.format ?? '')
+  const [caption, setCaption] = useState(post?.caption ?? '')
+  const [imageAssetId, setImageAssetId] = useState(post?.imageAssetId)
+  const [thumb, setThumb] = useState(post?.thumb)
   const [noteId, setNoteId] = useState(post?.noteId ?? '')
+  const [copied, setCopied] = useState(false)
+  const artInput = useRef<HTMLInputElement>(null)
 
-  const projDesigns = designs.filter(d => d.projectId === projectId && !d.isTemplate)
   const projNotes = notes.filter(n => n.projectId === projectId)
+  const artUrl = imageAssetId ? getAssetUrlSync(imageAssetId) : undefined
+
+  const uploadArt = async (file: File) => {
+    const url = await fileToDataUrl(file)
+    const asset = await addAsset({ projectId, name: file.name, kind: 'arte' }, url)
+    if (imageAssetId) removeAsset(imageAssetId)
+    setImageAssetId(asset.id)
+    setThumb(await makeThumb(url))
+  }
+
+  const copyCaption = async () => {
+    try {
+      await navigator.clipboard.writeText(caption)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet wide" onClick={e => e.stopPropagation()}>
         <h3><I n={post ? 'pencil' : 'plus'} /> {post ? 'Editar post' : 'Novo post'}</h3>
+
         <div className="field">
           <label>Título</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Post dica de terça" />
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Dica de terça" />
         </div>
+
         {!fixedProject && projects.length > 1 && (
           <div className="field">
-            <label>Projeto</label>
+            <label>Cliente</label>
             <select value={projectId} onChange={e => setProjectId(e.target.value)}>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
         )}
+
         <div className="prop-grid">
           <div className="field">
             <label>Data</label>
@@ -426,6 +476,22 @@ function PostSheet({
             <input type="time" value={time} onChange={e => setTime(e.target.value)} />
           </div>
         </div>
+
+        <div className="field">
+          <label>Formato</label>
+          <div className="chip-row">
+            {POST_FORMATS.map(f => (
+              <button
+                key={f}
+                className={'chip' + (format === f ? ' on' : '')}
+                onClick={() => setFormat(format === f ? '' : f)}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="field">
           <label>Status</label>
           <div className="chip-row">
@@ -436,32 +502,73 @@ function PostSheet({
             ))}
           </div>
         </div>
+
         <div className="field">
-          <label>Design vinculado</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <select style={{ flex: 1 }} value={designId} onChange={e => setDesignId(e.target.value)}>
-              <option value="">Nenhum</option>
-              {projDesigns.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            {designId && (
-              <button className="btn editor small" onClick={() => onOpenDesign(designId)}>Abrir no Editor</button>
-            )}
+          <label>Arte final</label>
+          <div className="art-row">
+            {artUrl ? <img className="art-preview" src={artUrl} alt="" /> : <div className="art-preview ph"><I n="image" size={26} /></div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button className="btn ghost small" onClick={() => artInput.current?.click()}>
+                <I n="image" size={15} /> {artUrl ? 'Trocar imagem' : 'Anexar da galeria'}
+              </button>
+              {artUrl && (
+                <button
+                  className="btn danger small"
+                  onClick={() => {
+                    if (imageAssetId) removeAsset(imageAssetId)
+                    setImageAssetId(undefined)
+                    setThumb(undefined)
+                  }}
+                >
+                  Remover
+                </button>
+              )}
+              <span className="muted" style={{ fontSize: 12 }}>
+                A arte pronta, feita no app de design que você preferir.
+              </span>
+            </div>
+            <input
+              ref={artInput} type="file" accept="image/*" hidden
+              onChange={e => e.target.files?.[0] && uploadArt(e.target.files[0])}
+            />
           </div>
         </div>
+
         <div className="field">
-          <label>Nota / roteiro vinculado</label>
+          <label>Legenda</label>
+          <textarea
+            rows={5}
+            value={caption}
+            placeholder="A legenda pronta para colar na hora de publicar…"
+            onChange={e => setCaption(e.target.value)}
+          />
+          <button
+            className="btn ghost small"
+            style={{ alignSelf: 'flex-start', marginTop: 8 }}
+            disabled={!caption}
+            onClick={copyCaption}
+          >
+            <I n={copied ? 'check' : 'note'} size={15} /> {copied ? 'Legenda copiada' : 'Copiar legenda'}
+          </button>
+        </div>
+
+        <div className="field">
+          <label>Roteiro vinculado</label>
           <div style={{ display: 'flex', gap: 8 }}>
             <select style={{ flex: 1 }} value={noteId} onChange={e => setNoteId(e.target.value)}>
-              <option value="">Nenhuma</option>
+              <option value="">Nenhum</option>
               {projNotes.map(n => (
-                <option key={n.id} value={n.id}>{n.kind === 'roteiro' ? 'Roteiro · ' : 'Nota · '}{n.title || 'Sem título'}</option>
+                <option key={n.id} value={n.id}>
+                  {n.kind === 'roteiro' ? 'Roteiro · ' : 'Nota · '}{n.title || 'Sem título'}
+                </option>
               ))}
             </select>
             {noteId && (
-              <button className="btn notes small" onClick={() => onOpenNote(noteId)}>Abrir nota</button>
+              <button className="btn notes small" onClick={() => onOpenNote(noteId)}>Abrir roteiro</button>
             )}
           </div>
         </div>
+
         <div className="actions">
           {onDelete && <button className="btn danger" onClick={onDelete}>Excluir</button>}
           <div className="spacer" />
@@ -474,7 +581,10 @@ function PostSheet({
                 date: date || undefined,
                 time: time || undefined,
                 status,
-                designId: designId || undefined,
+                format: format || undefined,
+                caption: caption || undefined,
+                imageAssetId,
+                thumb,
                 noteId: noteId || undefined,
               })
             }
@@ -487,7 +597,7 @@ function PostSheet({
   )
 }
 
-export default function Calendar({ project }: { project: Project }) {
+export default function Calendar({ project, openPostId }: { project: Project; openPostId?: ID }) {
   const projects = useStore(s => s.projects)
-  return <CalendarCore projects={projects} fixedProject={project} />
+  return <CalendarCore projects={projects} fixedProject={project} openPostId={openPostId} />
 }

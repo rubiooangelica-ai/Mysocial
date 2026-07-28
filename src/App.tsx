@@ -3,7 +3,6 @@ import { useStore } from './store'
 import { useNav } from './nav'
 import Home from './components/Home'
 import Project from './components/Project'
-import DesignEditor from './components/DesignEditor'
 import GlobalCalendar from './components/GlobalCalendar'
 
 export default function App() {
@@ -29,8 +28,13 @@ export default function App() {
     case 'global-cal':
       return <GlobalCalendar />
     case 'project':
-      return <Project projectId={route.projectId} tab={route.tab} noteId={route.noteId} />
-    case 'design':
-      return <DesignEditor projectId={route.projectId} designId={route.designId} />
+      return (
+        <Project
+          projectId={route.projectId}
+          tab={route.tab}
+          noteId={route.noteId}
+          postId={route.postId}
+        />
+      )
   }
 }

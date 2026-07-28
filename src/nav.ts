@@ -1,13 +1,12 @@
 import { create } from 'zustand'
 import type { ID } from './types'
 
-export type Tab = 'editor' | 'calendario' | 'notas' | 'ia'
+export type Tab = 'cronograma' | 'roteiros' | 'inspiracoes' | 'ia'
 
 export type Route =
   | { screen: 'home' }
   | { screen: 'global-cal' }
-  | { screen: 'project'; projectId: ID; tab: Tab; noteId?: ID }
-  | { screen: 'design'; projectId: ID; designId: ID }
+  | { screen: 'project'; projectId: ID; tab: Tab; noteId?: ID; postId?: ID }
 
 interface Nav {
   route: Route

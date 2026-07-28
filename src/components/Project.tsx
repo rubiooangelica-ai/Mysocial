@@ -1,26 +1,25 @@
-import { useState } from 'react'
 import { useStore } from '../store'
 import { useNav, type Tab } from '../nav'
 import type { ID } from '../types'
-import DesignList from './DesignList'
 import Calendar from './Calendar'
 import Notes from './Notes'
+import Inspirations from './Inspirations'
 import Ai from './Ai'
-import BrandKitSheet from './BrandKitSheet'
 import { I } from '../icons'
 
 const TABS: { id: Tab; label: string; ic: string; cls: string }[] = [
-  { id: 'editor', label: 'Editor', ic: 'palette', cls: 'on-editor' },
-  { id: 'calendario', label: 'Calendário', ic: 'calendar', cls: 'on-cal' },
-  { id: 'notas', label: 'Notas', ic: 'note', cls: 'on-notes' },
+  { id: 'cronograma', label: 'Cronograma', ic: 'calendar', cls: 'on-cal' },
+  { id: 'roteiros', label: 'Roteiros & Ideias', ic: 'note', cls: 'on-notes' },
+  { id: 'inspiracoes', label: 'Inspirações', ic: 'palette', cls: 'on-editor' },
   { id: 'ia', label: 'Assistente IA', ic: 'sparkle', cls: 'on-ai' },
 ]
 
-export default function Project({ projectId, tab, noteId }: { projectId: ID; tab: Tab; noteId?: ID }) {
+export default function Project({
+  projectId, tab, noteId, postId,
+}: { projectId: ID; tab: Tab; noteId?: ID; postId?: ID }) {
   const project = useStore(s => s.projects.find(p => p.id === projectId))
   const removeProject = useStore(s => s.removeProject)
   const go = useNav(s => s.go)
-  const [brandOpen, setBrandOpen] = useState(false)
 
   if (!project) {
     go({ screen: 'home' })
@@ -33,12 +32,11 @@ export default function Project({ projectId, tab, noteId }: { projectId: ID; tab
         <button className="icon-btn" onClick={() => go({ screen: 'home' })}><I n="back" /></button>
         <h1 style={{ color: project.accent }}>{project.name}</h1>
         <div className="spacer" />
-        <button className="btn ghost" onClick={() => setBrandOpen(true)}><I n="palette" size={18} /> Kit de Marca</button>
         <button
           className="icon-btn"
-          title="Excluir projeto"
+          title="Excluir cliente"
           onClick={() => {
-            if (confirm(`Excluir o projeto "${project.name}" e todo o seu conteúdo?`)) {
+            if (confirm(`Excluir "${project.name}" e todo o conteúdo dele?`)) {
               removeProject(project.id)
               go({ screen: 'home' })
             }
@@ -49,9 +47,9 @@ export default function Project({ projectId, tab, noteId }: { projectId: ID; tab
       </div>
 
       <div className="screen">
-        {tab === 'editor' && <DesignList project={project} />}
-        {tab === 'calendario' && <Calendar project={project} />}
-        {tab === 'notas' && <Notes project={project} openNoteId={noteId} />}
+        {tab === 'cronograma' && <Calendar project={project} openPostId={postId} />}
+        {tab === 'roteiros' && <Notes project={project} openNoteId={noteId} />}
+        {tab === 'inspiracoes' && <Inspirations project={project} />}
         {tab === 'ia' && <Ai project={project} />}
       </div>
 
@@ -67,8 +65,6 @@ export default function Project({ projectId, tab, noteId }: { projectId: ID; tab
           </button>
         ))}
       </div>
-
-      {brandOpen && <BrandKitSheet project={project} onClose={() => setBrandOpen(false)} />}
     </div>
   )
 }

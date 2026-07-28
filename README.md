@@ -1,28 +1,32 @@
-# ✦ MySocial · Estúdio de Social Media
+# ✦ MySocial · Painel de Social Media
 
-App touch-first para **gestão de social media freelancer** no iPad: editor visual de posts,
-calendário de conteúdo e notas/roteiros — tudo organizado em **projetos por cliente**,
-num único lugar (em vez de Canva + Google Agenda + bloco de notas).
+Painel de trabalho touch-first para **social media freelancer** no iPad: cronograma de
+publicações, roteiros, banco de ideias e mural de inspirações — tudo organizado
+**por cliente**, em um lugar só.
+
+O app **não edita imagens**. A arte é criada onde você preferir (Canva, Figma, Procreate)
+e anexada ao post — aqui é onde o trabalho é planejado, escrito e acompanhado.
 
 ## Como usar no iPad
 
-O app é um **PWA (Progressive Web App)**: depois de publicado em qualquer hosting estático
-(Vercel, Netlify, Cloudflare Pages…), abra no Safari do iPad e use
-**Compartilhar → Adicionar à Tela de Início**. Ele passa a abrir em tela cheia, como app
-nativo, e **funciona offline** — todos os dados ficam salvos no dispositivo (IndexedDB).
+O app é um **PWA (Progressive Web App)** publicado em
+[rubiooangelica-ai.github.io/Mysocial](https://rubiooangelica-ai.github.io/Mysocial/).
+Abra no Safari do iPad e use **Compartilhar → Adicionar à Tela de Início**. Ele passa a
+abrir em tela cheia, como app nativo, e **funciona offline** — os dados ficam salvos no
+dispositivo (IndexedDB).
 
-## Módulos
+## Como está organizado
 
-| Módulo | O que faz |
+| Onde | O que faz |
 |---|---|
-| 🗂️ **Projetos** | Um projeto por empresa/cliente, com Kit de Marca próprio (paleta, fontes, logo, elementos, tom de voz) e subpastas opcionais por tipo de conteúdo |
-| 🎨 **Editor** | Templates por formato (Feed 1:1 e 4:5, Story 9:16, capa de Reels), camadas editáveis (texto, imagem, formas, ícones) com mover/redimensionar/girar/opacidade/ordem, kit de marca no painel lateral, redimensionamento automático entre formatos, templates personalizados e exportação PNG/JPG em alta resolução |
-| 📅 **Calendário** | Visões mensal, semanal (com horários) e lista por status (Rascunho → Aprovado → Agendado → Publicado), cards com miniatura do design, drag-and-drop entre dias, filtro por projeto e **calendário geral consolidado** |
-| 📝 **Notas & Roteiros** | Notas livres, roteiros estruturados (Gancho / Desenvolvimento / CTA), vínculo ideia → roteiro → design → data, banco de ideias soltas |
-| ✨ **Assistente de IA** | Criação **guiada** de identidade visual a partir de inspirações anexadas (a IA pergunta antes de propor; a proposta é editável e vira o Kit de Marca) e **Pesquisar ideias**: analisa a pasta do projeto, pesquisa o nicho na web e sugere posts com copy e roteiro no tom de voz da marca, montando rascunho automático no Editor |
+| **Painel inicial** | A semana inteira de relance: posts dos próximos 7 dias por cliente, quantos aguardam aprovação, quantos estão sem data e quantas ideias esperam no banco |
+| 📅 **Cronograma** | Visões mensal, semanal (com horários) e lista por status (Rascunho → Aprovado → Agendado → Publicado). Cada post guarda data, horário, formato (Feed, Carrossel, Stories, Reels), status, **legenda pronta para copiar** e a **arte final anexada da galeria**. Arraste um card para remarcar; filtre por cliente ou veja o cronograma geral |
+| 📝 **Roteiros & Ideias** | Roteiros estruturados (Gancho / Desenvolvimento / CTA) e notas livres. Uma ideia vira post no cronograma com um toque, levando a legenda junto |
+| 🎨 **Inspirações & Marca** | Mural de referências com anotações, links salvos e a marca do cliente (paleta com códigos copiáveis, fontes, logo e tom de voz) |
+| ✨ **Assistente IA** | Cria a identidade visual do cliente de forma guiada — lê o mural, faz perguntas e propõe paleta, fontes e tom de voz — e pesquisa o nicho na web para sugerir posts com legenda e roteiro no tom da marca |
 
-O assistente usa a API da Anthropic (Claude, multimodal + busca na web). Cole sua chave de
-API na aba *Assistente IA* — ela fica salva apenas no dispositivo.
+O assistente usa a API da Anthropic (Claude, multimodal + busca na web). A chave é colada
+na aba *Assistente IA* e fica salva apenas no dispositivo.
 
 ## Desenvolvimento
 
@@ -34,33 +38,30 @@ npm run preview  # servir o build localmente
 ```
 
 Stack: React 19 + TypeScript + Vite, Zustand (estado), IndexedDB via idb-keyval
-(persistência offline), canvas 2D para renderização/exportação dos designs, service worker
-para funcionamento offline. Sem backend — tudo local ao dispositivo.
+(persistência offline), service worker para funcionamento offline. Sem backend — tudo
+local ao dispositivo. O deploy é automático a cada push, via GitHub Actions.
 
 ## Estrutura
 
 ```
 src/
-  types.ts        # modelos de dados (projeto, design, camadas, post, nota…)
-  store.ts        # estado global + persistência IndexedDB + assets
-  render.ts       # renderizador canvas (miniaturas e exportação PNG/JPG)
-  designOps.ts    # criação de designs, redimensionamento automático, rascunhos da marca
+  types.ts        # modelos de dados (cliente, post, roteiro, arquivo)
+  store.ts        # estado global + persistência IndexedDB + utilidades de data e imagem
   ai.ts           # integração com a API da Anthropic
   nav.ts          # navegação entre telas
+  icons.tsx       # ícones de linha do app
   components/
-    Home.tsx          # grade de projetos
-    Project.tsx       # abas do projeto (Editor/Calendário/Notas/IA)
-    BrandKitSheet.tsx # kit de marca
-    DesignList.tsx    # designs e templates do projeto
-    DesignEditor.tsx  # editor visual de camadas
-    Calendar.tsx      # calendário (3 visões + drag-and-drop)
-    GlobalCalendar.tsx# visão consolidada de todos os clientes
-    Notes.tsx         # notas, roteiros e vínculos
-    Ai.tsx            # identidade visual guiada + pesquisa de ideias
+    Home.tsx          # painel inicial: a semana e os clientes
+    Project.tsx       # abas do cliente
+    Calendar.tsx      # cronograma (3 visões, arrastar e soltar, ficha do post)
+    GlobalCalendar.tsx# cronograma consolidado de todos os clientes
+    Notes.tsx         # roteiros, notas e banco de ideias
+    Inspirations.tsx  # mural de referências e marca do cliente
+    Ai.tsx            # identidade guiada + pesquisa de ideias
 ```
 
-## Roadmap futuro
+## Ideias para o futuro
 
-- Sincronização em nuvem entre dispositivos (hoje: local + exportação manual)
-- Multiusuário / acesso de clientes
+- Sincronização em nuvem entre dispositivos (hoje: local ao aparelho)
+- Acesso de clientes para aprovação
 - Publicação direta nas redes sociais

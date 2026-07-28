@@ -1,106 +1,30 @@
-// ─── Modelos de dados do app ───────────────────────────────────────────────
+// ─── Modelos de dados do painel ────────────────────────────────────────────
 
 export type ID = string
 
+/** Referência visual do cliente: cores, fontes e tom de voz da marca. */
 export interface BrandKit {
   colors: string[]
   headingFont: string
   bodyFont: string
   logoAssetId?: string
   elementAssetIds: string[]
-  voice: string // resumo de tom de voz / personalidade da marca
+  voice: string
 }
 
 export interface Project {
   id: ID
   name: string
-  accent: string // cor do projeto (usada no calendário consolidado)
+  accent: string // cor do cliente (usada no painel e no cronograma consolidado)
   brand: BrandKit
-  inspirationLinks?: string[] // links de referência para o assistente de IA
+  inspirationLinks?: string[]
   createdAt: number
 }
 
-// ─── Editor ────────────────────────────────────────────────────────────────
+// ─── Cronograma ────────────────────────────────────────────────────────────
 
-export interface FormatSpec {
-  id: string
-  label: string
-  w: number
-  h: number
-}
-
-export const FORMATS: FormatSpec[] = [
-  { id: 'feed-1x1', label: 'Feed 1:1', w: 1080, h: 1080 },
-  { id: 'feed-4x5', label: 'Feed 4:5', w: 1080, h: 1350 },
-  { id: 'story-9x16', label: 'Story 9:16', w: 1080, h: 1920 },
-  { id: 'reels-cover', label: 'Capa de Reels', w: 1080, h: 1920 },
-]
-
-export type LayerType = 'text' | 'image' | 'shape' | 'icon'
-
-interface LayerBase {
-  id: ID
-  type: LayerType
-  x: number
-  y: number
-  w: number
-  h: number
-  rotation: number
-  opacity: number
-}
-
-export interface TextLayer extends LayerBase {
-  type: 'text'
-  text: string
-  font: string
-  size: number
-  color: string
-  align: 'left' | 'center' | 'right'
-  lineHeight: number
-  bold: boolean
-  italic: boolean
-}
-
-export interface ImageLayer extends LayerBase {
-  type: 'image'
-  assetId: string
-  radius: number
-}
-
-export type ShapeKind = 'rect' | 'circle' | 'triangle' | 'line'
-
-export interface ShapeLayer extends LayerBase {
-  type: 'shape'
-  shape: ShapeKind
-  fill: string
-  radius: number
-}
-
-export interface IconLayer extends LayerBase {
-  type: 'icon'
-  glyph: string // emoji do banco de ícones
-}
-
-export type Layer = TextLayer | ImageLayer | ShapeLayer | IconLayer
-
-export const CATEGORIES = ['Feed', 'Stories', 'Reels/Capas', 'Institucional'] as const
-
-export interface Design {
-  id: ID
-  projectId: ID
-  name: string
-  formatId: string
-  w: number
-  h: number
-  bg: string
-  layers: Layer[]
-  category?: string // subpasta opcional
-  isTemplate: boolean // template personalizado salvo pela usuária
-  thumb?: string // dataURL pequena para cards
-  updatedAt: number
-}
-
-// ─── Calendário ────────────────────────────────────────────────────────────
+export const POST_FORMATS = ['Feed', 'Carrossel', 'Stories', 'Reels'] as const
+export type PostFormat = (typeof POST_FORMATS)[number]
 
 export type PostStatus = 'rascunho' | 'aprovado' | 'agendado' | 'publicado'
 
@@ -117,15 +41,18 @@ export interface Post {
   id: ID
   projectId: ID
   title: string
-  date?: string // YYYY-MM-DD (sem data = backlog)
+  date?: string // YYYY-MM-DD (sem data = ainda no backlog)
   time?: string // HH:MM
   status: PostStatus
-  designId?: ID
+  format?: PostFormat
+  caption?: string // legenda pronta para copiar na hora de postar
+  imageAssetId?: ID // arte final, feita em outro app e anexada aqui
+  thumb?: string // miniatura da arte, para os cards
   noteId?: ID
   createdAt: number
 }
 
-// ─── Notas & Roteiros ──────────────────────────────────────────────────────
+// ─── Roteiros, notas e ideias ──────────────────────────────────────────────
 
 export type NoteKind = 'nota' | 'roteiro'
 
@@ -139,18 +66,18 @@ export interface Note {
   dev: string // desenvolvimento (roteiro)
   cta: string // chamada para ação (roteiro)
   postId?: ID
-  designId?: ID
-  fromAI?: boolean // ideia gerada pela IA (banco de ideias)
+  fromAI?: boolean // ideia gerada pela IA
   updatedAt: number
 }
 
-// ─── Assets (imagens salvas no IndexedDB) ─────────────────────────────────
+// ─── Arquivos guardados no dispositivo ─────────────────────────────────────
 
 export interface AssetMeta {
   id: ID
-  projectId?: ID // sem projeto = biblioteca geral
+  projectId?: ID
   name: string
-  kind: 'image' | 'logo' | 'element' | 'inspiration'
+  kind: 'arte' | 'logo' | 'element' | 'inspiration'
+  note?: string // anotação da inspiração ("gostei da paleta")
   createdAt: number
 }
 
@@ -170,15 +97,8 @@ export const FONTS = [
 ]
 
 export const PALETTE_PRESETS = [
-  '#1a1a2e', '#e94560', '#0f3460', '#f5f5f0', '#c9ada7',
-  '#4a4e69', '#9a8c98', '#f2e9e4', '#22223b', '#ffbe0b',
+  '#e07a9f', '#a183d9', '#e5926f', '#5fb8a5', '#f2c9d4',
+  '#4a3b45', '#9a8892', '#fbf6f4', '#22223b', '#ffbe0b',
   '#fb5607', '#ff006e', '#8338ec', '#3a86ff', '#06d6a0',
   '#118ab2', '#073b4c', '#ef476f', '#ffd166', '#ffffff', '#000000',
-]
-
-export const ICON_BANK = [
-  '⭐', '❤️', '🔥', '✨', '💡', '📣', '🎯', '🚀', '📌', '✅',
-  '➡️', '⬇️', '👇', '☝️', '💬', '📱', '📷', '🎥', '🎧', '🛍️',
-  '💰', '📈', '🏆', '🎁', '☀️', '🌙', '🌿', '🌸', '💧', '⚡',
-  '🍽️', '☕', '🥗', '💪', '🧘', '💄', '👗', '🏠', '🚗', '✈️',
 ]
